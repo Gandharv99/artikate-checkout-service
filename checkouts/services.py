@@ -72,7 +72,7 @@ def return_asset(checkout_id, condition_note="", needs_maintenance=False):
             raise NotFound(f"No checkout with id '{checkout_id}'.")
 
         if checkout.returned_at is not None:
-            raise Conflict("This checkout has already been returned.")
+            raise ConflictException("This checkout has already been returned.")
 
         checkout.returned_at = timezone.now()
         checkout.condition_note = condition_note
