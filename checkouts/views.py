@@ -1,12 +1,14 @@
 from django.db import connection
 from rest_framework import viewsets, filters, status
+from rest_framework.generics import get_object_or_404
 from rest_framework.decorators import api_view, permission_classes, action
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 
 from .models import Asset, Employee
-from .serializers import AssetSerializer, EmployeeSerializer, CheckOutSerializer, CheckOutCreateSerializer, ReturnSerializer
+from .serializers import AssetSerializer, EmployeeSerializer, CheckOutSerializer, CheckOutCreateSerializer, ReturnSerializer, EmployeeSummarySerializer, OverdueCheckoutSerializer
 from .services import check_out, return_asset
+from .selectors import employee_summary, overdue_checkouts_queryset
 from .filters import AssetFilter
 
 # Create your views here.
@@ -46,3 +48,16 @@ class CheckOutViewSet(viewsets.ViewSet):
         input_serializer.is_valid(raise_exception=True)
         checkout = return_asset(checkout_id=pk, **input_serializer.validated_data)
         return Response(CheckOutSerializer(checkout).data, status=status.HTTP_200_OK)
+
+@api_view(["GET"])
+def employee_summary_view(request, employee_code):
+    employee = get_object_or_404(Employee, employee_code=employee_code)
+    data = employee_summary(employee)
+    return Response(EmployeeSummarySerializer(data).data)
+
+
+@api_view(["GET"])
+def overdue_report_view(request):
+    checkouts = overdue_checkouts_queryset()
+    serializer = OverdueCheckoutSerializer(checkouts, many=True)
+    return Response({"count": len(serializer.data), "results": serializer.data})

@@ -41,3 +41,22 @@ class CheckOutSerializer(serializers.ModelSerializer):
 class ReturnSerializer(serializers.Serializer):
     condition_note = serializers.CharField(required=False, allow_blank=True, default="")
     needs_maintenance = serializers.BooleanField(required=False, default=False)
+
+class EmployeeSummarySerializer(serializers.Serializer):
+    lifetime_checkouts = serializers.IntegerField()
+    currently_held = serializers.IntegerField()
+    currently_overdue = serializers.IntegerField()
+    mean_hold_duration_days = serializers.FloatField(allow_null=True)
+
+
+class OverdueCheckoutSerializer(serializers.Serializer):
+    asset_name = serializers.CharField(source="asset.name")
+    asset_tag = serializers.CharField(source="asset.asset_tag")
+    employee_code = serializers.CharField(source="employee.employee_code")
+    employee_name = serializers.CharField(source="employee.full_name")
+    days_overdue = serializers.SerializerMethodField()
+
+    def get_days_overdue(self, obj):
+        from django.utils import timezone
+        delta = timezone.now() - obj.due_at
+        return delta.days
