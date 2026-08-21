@@ -13,7 +13,7 @@ class Asset(models.Model):
         CHECKED_OUT = "CHECKED_OUT", "Checked Out"
         MAINTENANCE = "MAINTENANCE", "Maintenance"
 
-    assest_tag = models.CharField(max_length=32, unique=True, db_index=True)
+    asset_tag = models.CharField(max_length=32, unique=True, db_index=True)
     name = models.CharField(max_length=120)
     category = models.CharField(max_length=20, choices=Category.choices)
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.AVAILABLE)

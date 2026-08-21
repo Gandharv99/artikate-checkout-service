@@ -1,16 +1,17 @@
 from django.db import connection
 from rest_framework import viewsets, filters, status
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, action
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 
 from .models import Asset, Employee
-from .serializers import AssetSerializer, EmployeeSerializer
+from .serializers import AssetSerializer, EmployeeSerializer, CheckOutSerializer, CheckOutCreateSerializer, ReturnSerializer
+from .services import check_out, return_asset
 from .filters import AssetFilter
 
 # Create your views here.
 class AssetViewSet(viewsets.ModelViewSet):
-    queryset = Asset.objects.all().order_by("assest_tag")
+    queryset = Asset.objects.all().order_by("asset_tag")
     serializer_class = AssetSerializer
     filterset_class = AssetFilter
     search_fields = ['asset_tag', 'name']
@@ -30,3 +31,18 @@ def health_check(request):
 
     payload = {"status": "ok" if db_ok else "degraded", "database": db_ok}
     return Response(payload, status=status.HTTP_200_OK)
+
+class CheckOutViewSet(viewsets.ViewSet):
+
+    def create(self, request):
+        input_serializer = CheckOutCreateSerializer(data=request.data)
+        input_serializer.is_valid(raise_exception=True)
+        checkout = check_out(**input_serializer.validated_data)
+        return Response(CheckOutSerializer(checkout).data, status=status.HTTP_201_CREATED)
+
+    @action(detail=True, methods=['post'], url_path='return')
+    def return_asset(self, request, pk=None):
+        input_serializer = ReturnSerializer(data=request.data)
+        input_serializer.is_valid(raise_exception=True)
+        checkout = return_asset(checkout_id=pk, **input_serializer.validated_data)
+        return Response(CheckOutSerializer(checkout).data, status=status.HTTP_200_OK)
